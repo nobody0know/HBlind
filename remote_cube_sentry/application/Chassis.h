@@ -53,9 +53,9 @@ typedef enum {
 #define chassis_start_buzzer buzzer_on  (31, 19999)
 #define chassis_buzzer_off   buzzer_off()            //buzzer off，关闭蜂鸣器
 
-#define MAX_CHASSIS_VX_SPEED 3.0f //根据3508最高转速计算底盘最快移动速度应为3.3m/s左右
-#define MAX_CHASSIS_VY_SPEED 3.0f
-#define MAX_CHASSIS_VW_SPEED 5.0f
+#define MAX_CHASSIS_VX_SPEED 1.0f //根据3508最高转速计算底盘最快移动速度应为3.3m/s左右
+#define MAX_CHASSIS_VY_SPEED 1.0f
+#define MAX_CHASSIS_VW_SPEED 1.0f
 #define CHASSIS_SWING_SPEED 1.0f
 
 #define MAX_CHASSIS_AUTO_VX_SPEED 3.0f //根据3508最高转速计算底盘最快移动速度应为3300左右
@@ -72,14 +72,14 @@ typedef enum {
 
 
 //底盘机械信息 /m
-#define Wheel_axlespacing 0.448f //H
-#define Wheel_spacing 0.391f //W
+#define Wheel_axlespacing 0.2f //H
+#define Wheel_spacing 0.25f //W
 #define GIMBAL_OFFSET 0
-#define PERIMETER 0.47414f //zhou chang /m
-#define M3508_DECELE_RATIO 1.0f/19.0f
-#define M3508_MAX_RPM 8000
+#define PERIMETER 0.251328f //zhou chang /m
+#define M3508_DECELE_RATIO 1.0f/36.0f
+#define M3508_MAX_RPM 18000
 #define TREAD 480 //lun ju
-#define WHEEL_MOTO_RATE 0.00041591f
+#define WHEEL_MOTO_RATE 0.000116355f
 
 //枚举 结构体
 typedef enum

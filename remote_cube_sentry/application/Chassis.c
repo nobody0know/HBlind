@@ -31,8 +31,8 @@ chassis_t chassis;
 extern robot_ctrl_info_t robot_ctrl;
 //底盘解算发送数据
 extern chassis_odom_info_t chassis_odom;
-extern bool our_outpost_destroyed;
 extern uint32_t nav_time;
+uint32_t reset_time;
 //发送机器人id
 vision_t vision_data;
 static fp32 rotate_ratio_f = ((Wheel_axlespacing + Wheel_spacing) / 2.0f - GIMBAL_OFFSET); //rad
@@ -65,10 +65,36 @@ _Noreturn void chassis_task(void const *pvParameters) {
     vTaskDelay(CHASSIS_TASK_INIT_TIME);
     chassis_init();//底盘初始化
     //主任务循环
+    int key_time=0;
     while (1) {
         chassis_feedback_update();
         vTaskSuspendAll(); //锁住RTOS内核防止控制过程中断，造成错误
         chassis_set_mode();
+//        if((HAL_GetTick() - nav_time)<1000)
+//            chassis.mode = CHASSIS_AUTO;
+//        else chassis.mode = CHASSIS_RELAX;
+
+        if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==GPIO_PIN_RESET)
+        {
+            key_time++;
+            if(key_time>=100)
+            {
+                if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==GPIO_PIN_RESET)
+                {
+                    vision_data.shoot_sta = 1;
+                    reset_time = HAL_GetTick();
+                    vision_data.shoot_speed = 1;//reset robot
+                }
+            }
+        }
+        if(HAL_GetTick()-reset_time>=500)
+            vision_data.shoot_speed= 0;
+        if(vision_data.shoot_sta == 1)
+        {
+            detect_handle(DETECT_AUTO_AIM);
+            detect_handle(DETECT_REMOTE);
+
+        }
         //判断底盘模式选择 决定是否覆盖底盘转速vw;
         switch (chassis.mode) {
             case CHASSIS_DEBUG:
@@ -155,7 +181,7 @@ static void chassis_auto_handle() {
     ramp_calc(&chassis_auto_vw_ramp, robot_ctrl.vw);
     robot_ctrl.vw = chassis_auto_vw_ramp.out;
 
-    chassis.vx = robot_ctrl.vx;
+    chassis.vx = -robot_ctrl.vx;
     chassis.vy = robot_ctrl.vy;
     chassis.vw = robot_ctrl.vw;
 }
@@ -196,7 +222,7 @@ void chassis_feedback_update()
 {
 
     //update odom vel data
-    chassis_odom.vx = ((float)(chassis.motor_chassis[1].motor_info.speed_rpm
+    chassis_odom.vx = -((float)(chassis.motor_chassis[1].motor_info.speed_rpm
                             + chassis.motor_chassis[2].motor_info.speed_rpm
                             - chassis.motor_chassis[0].motor_info.speed_rpm
                             - chassis.motor_chassis[3].motor_info.speed_rpm
@@ -212,8 +238,10 @@ void chassis_feedback_update()
                             - chassis.motor_chassis[1].motor_info.speed_rpm
                             - chassis.motor_chassis[0].motor_info.speed_rpm
                             - chassis.motor_chassis[3].motor_info.speed_rpm
-                           )*(WHEEL_MOTO_RATE))/(2*Wheel_axlespacing+2*Wheel_spacing);
+                           )*(WHEEL_MOTO_RATE))/4;
     rm_queue_data( CHASSIS_ODOM_CMD_ID,&chassis_odom,sizeof (chassis_odom_info_t));
+    vTaskDelay(5);
+    rm_queue_data(VISION_ID,&vision_data,sizeof(vision_t));
 }
 
 static void chassis_wheel_loop_cal() {

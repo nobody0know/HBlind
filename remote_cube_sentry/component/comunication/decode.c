@@ -15,7 +15,7 @@
 void usb_fifo_init();
 void decode_task(void const * arg);
 extern robot_ctrl_info_t robot_ctrl;
-extern uint32_t nav_time;
+uint32_t nav_time;
 navigation_info nav_info;
 //usb fifo 控制结构体
 fifo_s_t usb_fifo;
@@ -175,6 +175,7 @@ uint16_t decode_data_solve(uint8_t *frame)
         case CHASSIS_CTRL_CMD_ID:
         {
             memcpy(&robot_ctrl, frame + index, sizeof(robot_ctrl_info_t));
+            nav_time = HAL_GetTick();
             detect_handle(DETECT_AUTO_AIM);
             break;
         }
